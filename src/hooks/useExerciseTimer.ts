@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useCallback } from 'react';
-import { TIME_LIMIT_SECONDS } from '@/lib/exercises';
+import { DEFAULT_TIME_LIMIT_SECONDS } from '@/lib/exercises';
 
 interface UseExerciseTimerReturn {
   startTimer: () => void;
@@ -37,14 +37,14 @@ export function useExerciseTimer(): UseExerciseTimerReturn {
     }
     
     const elapsed = getElapsedTime();
-    elapsedTimeRef.current = Math.min(elapsed, TIME_LIMIT_SECONDS);
+    elapsedTimeRef.current = Math.min(elapsed, DEFAULT_TIME_LIMIT_SECONDS);
     startTimeRef.current = null;
     
     return elapsedTimeRef.current;
   }, [getElapsedTime]);
 
   const isTimedOut = useCallback(() => {
-    return getElapsedTime() >= TIME_LIMIT_SECONDS;
+    return getElapsedTime() >= DEFAULT_TIME_LIMIT_SECONDS;
   }, [getElapsedTime]);
 
   const resetTimer = useCallback(() => {
