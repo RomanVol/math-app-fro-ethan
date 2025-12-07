@@ -23,6 +23,11 @@ import {
   getActiveSession,
   getSessionRounds,
   StorageError,
+  saveExerciseToHistory,
+  saveSessionSummary,
+  compareWithPreviousSessions,
+  getLastHistoricalAttempt,
+  SessionComparison,
 } from '@/lib/storage';
 
 // Action types
@@ -36,12 +41,17 @@ type AppAction =
   | { type: 'RECORD_ATTEMPT'; payload: ExerciseAttempt }
   | { type: 'END_ROUND'; payload: Round }
   | { type: 'START_NEXT_ROUND'; payload: Exercise[] }
-  | { type: 'COMPLETE_SESSION' }
+  | { type: 'COMPLETE_SESSION'; payload: { comparison: SessionComparison } }
   | { type: 'STOP_SESSION' }
   | { type: 'RESET' };
 
+// Extended state with comparison
+interface ExtendedAppState extends AppState {
+  sessionComparison: SessionComparison | null;
+}
+
 // Initial state
-const initialState: AppState = {
+const initialState: ExtendedAppState = {
   session: null,
   currentRound: null,
   completedRounds: [],
@@ -51,10 +61,11 @@ const initialState: AppState = {
   isLoading: false,
   error: null,
   phase: 'idle',
+  sessionComparison: null,
 };
 
 // Reducer
-function appReducer(state: AppState, action: AppAction): AppState {
+function appReducer(state: ExtendedAppState, action: AppAction): ExtendedAppState {
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
@@ -78,6 +89,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         phase: 'exercise',
         isLoading: false,
         error: null,
+        sessionComparison: null,
       };
 
     case 'RESUME_SESSION':
@@ -101,6 +113,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         phase: 'exercise',
         isLoading: false,
         error: null,
+        sessionComparison: null,
       };
 
     case 'SET_PHASE':
@@ -149,6 +162,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         phase: 'complete',
+        sessionComparison: action.payload.comparison,
       };
 
     case 'STOP_SESSION':
@@ -167,7 +181,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
 // Context
 interface AppContextType {
-  state: AppState;
+  state: ExtendedAppState;
   startNewSession: () => Promise<void>;
   resumeSession: () => Promise<void>;
   submitAnswer: (answer: number, elapsedTime: number) => Promise<void>;
@@ -340,6 +354,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       result,
     };
 
+    // Save to global history for cross-session comparison
+    saveExerciseToHistory(state.session.id, attempt);
+
     dispatch({ type: 'RECORD_ATTEMPT', payload: attempt });
 
     // Move to next exercise or end round
@@ -389,7 +406,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Handle timeout
   const handleTimeout = useCallback(async (elapsedTime: number) => {
     const exercise = getCurrentExercise();
-    if (!exercise) return;
+    if (!exercise || !state.session) return;
 
     const timeLimit = getTimeLimit();
     const result = calculateResult(exercise.exercise_id, false, timeLimit);
@@ -402,6 +419,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       time_taken_sec: timeLimit,
       result,
     };
+
+    // Save to global history for cross-session comparison
+    saveExerciseToHistory(state.session.id, attempt);
 
     dispatch({ type: 'RECORD_ATTEMPT', payload: attempt });
 
@@ -446,14 +466,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .map((ex) => ex.exercise_id);
 
     if (failedExerciseIds.length === 0) {
-      // All exercises completed successfully
+      // All exercises completed successfully - save and compare
       const action = async () => {
         try {
+          const endTime = new Date().toISOString();
+          
+          // Save session summary for future comparisons
+          saveSessionSummary(
+            state.session!.id,
+            state.completedRounds,
+            state.session!.start_time,
+            endTime
+          );
+
+          // Compare with previous sessions
+          const comparison = compareWithPreviousSessions(
+            state.session!.id,
+            state.completedRounds,
+            state.session!.start_time
+          );
+
           await updateSession(state.session!.id, {
             status: 'completed',
-            end_time: new Date().toISOString(),
+            end_time: endTime,
           });
-          dispatch({ type: 'COMPLETE_SESSION' });
+          
+          dispatch({ type: 'COMPLETE_SESSION', payload: { comparison } });
         } catch (error) {
           const message = error instanceof StorageError
             ? error.message

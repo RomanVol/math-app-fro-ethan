@@ -4,4 +4,5 @@ export { SessionControls } from './SessionControls';
 export { ExerciseDisplay } from './ExerciseDisplay';
 export { RoundSummary } from './RoundSummary';
 export { SessionComplete } from './SessionComplete';
+export { SessionComparisonView } from './SessionComparison';
 export { PracticeApp } from './PracticeApp';

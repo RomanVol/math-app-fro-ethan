@@ -1,17 +1,20 @@
 'use client';
 
 import { Round } from '@/lib/types';
+import { SessionComparison } from '@/lib/storage';
+import { SessionComparisonView } from './SessionComparison';
 
 interface SessionCompleteProps {
   rounds: Round[];
   onNewSession: () => void;
+  comparison?: SessionComparison | null;
 }
 
 /**
- * Session completion screen showing final statistics
+ * Session completion screen showing final statistics and comparison
  * Follows Single Responsibility Principle - only handles completion display
  */
-export function SessionComplete({ rounds, onNewSession }: SessionCompleteProps) {
+export function SessionComplete({ rounds, onNewSession, comparison }: SessionCompleteProps) {
   const totalExercises = rounds.reduce((sum, r) => sum + r.exercises.length, 0);
   const totalCorrect = rounds.reduce(
     (sum, r) => sum + r.exercises.filter((ex) => ex.correct).length,
@@ -33,9 +36,9 @@ export function SessionComplete({ rounds, onNewSession }: SessionCompleteProps) 
     .slice(0, 5);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 text-center" dir="rtl">
+    <div className="mx-auto max-w-4xl space-y-8 p-4" dir="rtl">
       {/* Celebration */}
-      <div className="space-y-4">
+      <div className="space-y-4 text-center">
         <div className="text-6xl">🎉</div>
         <h1 className="text-4xl font-bold text-gray-900">כל הכבוד!</h1>
         <p className="text-xl text-gray-600">
@@ -43,28 +46,33 @@ export function SessionComplete({ rounds, onNewSession }: SessionCompleteProps) 
         </p>
       </div>
 
-      {/* Statistics */}
+      {/* Current Session Statistics */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-xl bg-blue-50 p-6">
+        <div className="rounded-xl bg-blue-50 p-6 text-center">
           <div className="text-3xl font-bold text-blue-600">{rounds.length}</div>
           <div className="text-sm text-blue-800">סיבובים</div>
         </div>
-        <div className="rounded-xl bg-green-50 p-6">
+        <div className="rounded-xl bg-green-50 p-6 text-center">
           <div className="text-3xl font-bold text-green-600">
             {Math.round((totalCorrect / totalExercises) * 100)}%
           </div>
           <div className="text-sm text-green-800">דיוק</div>
         </div>
-        <div className="rounded-xl bg-purple-50 p-6">
+        <div className="rounded-xl bg-purple-50 p-6 text-center">
           <div className="text-3xl font-bold text-purple-600">
-            {Math.round(totalTime)} שניות
+            {Math.round(totalTime)}s
           </div>
           <div className="text-sm text-purple-800">זמן כולל</div>
         </div>
       </div>
 
-      {/* Challenging exercises */}
-      {hardestExercises.length > 0 && (
+      {/* Comparison with Previous Sessions */}
+      {comparison && (
+        <SessionComparisonView comparison={comparison} />
+      )}
+
+      {/* Challenging exercises (only if no comparison or few improvements) */}
+      {hardestExercises.length > 0 && !comparison && (
         <div className="rounded-xl bg-yellow-50 p-6">
           <h3 className="mb-4 font-semibold text-yellow-900">
             תרגילים שדרשו תרגול נוסף:
@@ -83,12 +91,14 @@ export function SessionComplete({ rounds, onNewSession }: SessionCompleteProps) 
       )}
 
       {/* New session button */}
-      <button
-        onClick={onNewSession}
-        className="rounded-xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-      >
-        התחל תרגול חדש
-      </button>
+      <div className="flex justify-center pt-4">
+        <button
+          onClick={onNewSession}
+          className="rounded-xl bg-gradient-to-r from-green-500 to-blue-500 px-8 py-4 text-xl font-bold text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          🔄 התחל תרגול חדש
+        </button>
+      </div>
     </div>
   );
 }

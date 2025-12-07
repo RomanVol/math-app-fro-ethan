@@ -112,10 +112,11 @@ export function PracticeApp() {
   // Complete phase
   if (state.phase === 'complete') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="min-h-screen bg-gray-50 p-4 py-8 overflow-auto">
         <SessionComplete
           rounds={state.completedRounds}
           onNewSession={startNewSession}
+          comparison={state.sessionComparison}
         />
       </div>
     );
