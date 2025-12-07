@@ -11,83 +11,79 @@ interface SessionCompleteProps {
 }
 
 /**
+ * Format date and time in Hebrew
+ */
+function formatDateTime(isoString: string): string {
+  const d = new Date(isoString);
+  const date = d.toLocaleDateString('he-IL', {
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric',
+  });
+  const time = d.toLocaleTimeString('he-IL', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  return `${date} בשעה ${time}`;
+}
+
+/**
+ * Format seconds to minutes:seconds
+ */
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  if (mins > 0) {
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${secs} שניות`;
+}
+
+/**
  * Session completion screen showing final statistics and comparison
- * Follows Single Responsibility Principle - only handles completion display
  */
 export function SessionComplete({ rounds, onNewSession, comparison }: SessionCompleteProps) {
-  const totalExercises = rounds.reduce((sum, r) => sum + r.exercises.length, 0);
-  const totalCorrect = rounds.reduce(
-    (sum, r) => sum + r.exercises.filter((ex) => ex.correct).length,
-    0
-  );
   const totalTime = rounds.reduce((sum, r) => sum + r.total_time_sec, 0);
 
-  // Find exercises that needed multiple attempts
-  const exerciseAttempts: Record<string, number> = {};
-  rounds.forEach((round) => {
-    round.exercises.forEach((ex) => {
-      exerciseAttempts[ex.exercise_id] = (exerciseAttempts[ex.exercise_id] || 0) + 1;
-    });
-  });
-
-  const hardestExercises = Object.entries(exerciseAttempts)
-    .filter(([, attempts]) => attempts > 1)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 5);
-
   return (
-    <div className="mx-auto max-w-4xl space-y-8 p-4" dir="rtl">
-      {/* Celebration */}
-      <div className="space-y-4 text-center">
-        <div className="text-6xl">🎉</div>
-        <h1 className="text-4xl font-bold text-gray-900">כל הכבוד!</h1>
-        <p className="text-xl text-gray-600">
-          שלטת בכל 49 תרגילי הכפל!
+    <div className="mx-auto max-w-4xl space-y-6 p-4" dir="rtl">
+      {/* Celebration Header */}
+      <div className="rounded-xl bg-gradient-to-r from-green-500 to-blue-600 p-6 text-white text-center">
+        <div className="text-5xl mb-3">🎉</div>
+        <h1 className="text-3xl font-bold mb-2">כל הכבוד!</h1>
+        <p className="text-lg opacity-90">שלטת בכל 49 תרגילי הכפל!</p>
+        <p className="text-sm opacity-70 mt-2">
+          📅 {formatDateTime(comparison?.currentSession.start_time || new Date().toISOString())}
         </p>
       </div>
 
-      {/* Current Session Statistics */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-xl bg-blue-50 p-6 text-center">
-          <div className="text-3xl font-bold text-blue-600">{rounds.length}</div>
-          <div className="text-sm text-blue-800">סיבובים</div>
-        </div>
-        <div className="rounded-xl bg-green-50 p-6 text-center">
-          <div className="text-3xl font-bold text-green-600">
-            {Math.round((totalCorrect / totalExercises) * 100)}%
+      {/* Current Session Stats */}
+      <div className="rounded-xl bg-white shadow-lg p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 text-center">📋 סיכום התרגול</h2>
+        
+        <div className="grid grid-cols-3 gap-4">
+          <div className="rounded-xl bg-blue-50 p-4 text-center">
+            <div className="text-3xl font-bold text-blue-600">{rounds.length}</div>
+            <div className="text-sm text-blue-800">🔄 סיבובים</div>
           </div>
-          <div className="text-sm text-green-800">דיוק</div>
-        </div>
-        <div className="rounded-xl bg-purple-50 p-6 text-center">
-          <div className="text-3xl font-bold text-purple-600">
-            {Math.round(totalTime)}s
+          <div className="rounded-xl bg-green-50 p-4 text-center">
+            <div className="text-3xl font-bold text-green-600">
+              {comparison ? comparison.currentSession.success_rate.toFixed(0) : 100}%
+            </div>
+            <div className="text-sm text-green-800">🎯 דיוק</div>
           </div>
-          <div className="text-sm text-purple-800">זמן כולל</div>
+          <div className="rounded-xl bg-purple-50 p-4 text-center">
+            <div className="text-3xl font-bold text-purple-600">
+              {formatTime(totalTime)}
+            </div>
+            <div className="text-sm text-purple-800">⏱️ זמן כולל</div>
+          </div>
         </div>
       </div>
 
-      {/* Comparison with Previous Sessions */}
+      {/* Comparison with Previous Session */}
       {comparison && (
         <SessionComparisonView comparison={comparison} />
-      )}
-
-      {/* Challenging exercises (only if no comparison or few improvements) */}
-      {hardestExercises.length > 0 && !comparison && (
-        <div className="rounded-xl bg-yellow-50 p-6">
-          <h3 className="mb-4 font-semibold text-yellow-900">
-            תרגילים שדרשו תרגול נוסף:
-          </h3>
-          <div className="flex flex-wrap justify-center gap-2">
-            {hardestExercises.map(([id, attempts]) => (
-              <span
-                key={id}
-                className="rounded-full bg-yellow-100 px-4 py-2 text-sm font-medium text-yellow-800"
-              >
-                {id} ({attempts} ניסיונות)
-              </span>
-            ))}
-          </div>
-        </div>
       )}
 
       {/* New session button */}
