@@ -20,6 +20,51 @@ export function generateAllExercises(): Exercise[] {
 }
 
 /**
+ * Generates exercises for specific multiplication tables
+ * @param selectedTables - Array of numbers (1-10) representing which tables to include
+ * @returns Array of exercises containing all combinations from selected tables
+ */
+export function generateExercisesForTables(selectedTables: number[]): Exercise[] {
+  const exercises: Exercise[] = [];
+  
+  // Generate all combinations where both factors are in selected tables
+  for (const a of selectedTables) {
+    for (const b of selectedTables) {
+      exercises.push({
+        exercise_id: `${a}x${b}`,
+        factors: [a, b],
+      });
+    }
+  }
+  
+  return exercises;
+}
+
+/**
+ * Get selected tables from localStorage or return default
+ */
+export function getSelectedTables(): number[] {
+  if (typeof window === 'undefined') return [3, 4, 5, 6, 7, 8, 9];
+  const stored = localStorage.getItem('math-practice-selected-tables');
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return [3, 4, 5, 6, 7, 8, 9];
+    }
+  }
+  return [3, 4, 5, 6, 7, 8, 9];
+}
+
+/**
+ * Save selected tables to localStorage
+ */
+export function setSelectedTables(tables: number[]): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('math-practice-selected-tables', JSON.stringify(tables));
+}
+
+/**
  * Shuffles an array using Fisher-Yates algorithm
  */
 export function shuffleExercises<T>(array: T[]): T[] {

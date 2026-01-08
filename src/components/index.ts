@@ -6,3 +6,4 @@ export { RoundSummary } from './RoundSummary';
 export { SessionComplete } from './SessionComplete';
 export { SessionComparisonView } from './SessionComparison';
 export { PracticeApp } from './PracticeApp';
+export { TableSelector } from './TableSelector';

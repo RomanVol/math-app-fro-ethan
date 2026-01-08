@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getTimeLimit, setTimeLimit } from '@/lib/exercises';
+import { getTimeLimit, setTimeLimit, getSelectedTables, setSelectedTables } from '@/lib/exercises';
+import { TableSelector } from './TableSelector';
 
 interface SessionControlsProps {
-  onStart: () => void;
+  onStart: (selectedTables: number[]) => void;
   onResume?: () => void;
   hasExistingSession?: boolean;
   isLoading?: boolean;
@@ -21,9 +22,11 @@ export function SessionControls({
   isLoading = false,
 }: SessionControlsProps) {
   const [timePerExercise, setTimePerExercise] = useState(10);
+  const [selectedTables, setSelectedTablesState] = useState<number[]>([3, 4, 5, 6, 7, 8, 9]);
 
   useEffect(() => {
     setTimePerExercise(getTimeLimit());
+    setSelectedTablesState(getSelectedTables());
   }, []);
 
   const handleTimeChange = (value: number) => {
@@ -31,18 +34,38 @@ export function SessionControls({
     setTimeLimit(value);
   };
 
+  const handleTablesChange = (tables: number[]) => {
+    setSelectedTablesState(tables);
+    setSelectedTables(tables);
+  };
+
+  const handleStart = () => {
+    onStart(selectedTables);
+  };
+
+  const exerciseCount = selectedTables.length * selectedTables.length;
+
   return (
-    <div className="flex flex-col items-center gap-8" dir="rtl">
+    <div className="flex flex-col items-center gap-6" dir="rtl">
       <div className="text-center">
         <h1 className="mb-4 text-4xl font-bold text-gray-900">
           תרגול לוח הכפל
         </h1>
         <p className="text-lg text-gray-600">
-          תרגלו את לוח הכפל מ-3×3 עד 9×9
+          בחרו את לוחות הכפל לתרגול
         </p>
-        <p className="mt-2 text-sm text-gray-500">
-          49 תרגילים • ענו נכון בזמן המוקצב
-        </p>
+      </div>
+
+      {/* Table Selection */}
+      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
+        <h3 className="mb-4 text-center text-lg font-semibold text-gray-700">
+          בחירת לוחות כפל
+        </h3>
+        <TableSelector
+          selectedTables={selectedTables}
+          onSelectionChange={handleTablesChange}
+          availableTables={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+        />
       </div>
 
       {/* Time setting */}
@@ -84,11 +107,11 @@ export function SessionControls({
 
       <div className="flex flex-col gap-4 sm:flex-row">
         <button
-          onClick={onStart}
-          disabled={isLoading}
+          onClick={handleStart}
+          disabled={isLoading || selectedTables.length === 0}
           className="rounded-xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isLoading ? 'מתחיל...' : 'התחל תרגול חדש'}
+          {isLoading ? 'מתחיל...' : `התחל תרגול (${exerciseCount} תרגילים)`}
         </button>
 
         {hasExistingSession && onResume && (
@@ -102,7 +125,15 @@ export function SessionControls({
         )}
       </div>
 
-      <div className="mt-8 rounded-lg bg-blue-50 p-6 text-center">
+      {/* Competition Mode Link */}
+      <a
+        href="/competition"
+        className="rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:from-purple-600 hover:to-pink-600 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+      >
+        🏆 מצב תחרות - שחק עם חברים!
+      </a>
+
+      <div className="mt-4 rounded-lg bg-blue-50 p-6 text-center">
         <h3 className="mb-2 font-semibold text-blue-900">איך זה עובד:</h3>
         <ul className="space-y-2 text-sm text-blue-800">
           <li>• תראו תרגילי כפל אחד אחרי השני</li>

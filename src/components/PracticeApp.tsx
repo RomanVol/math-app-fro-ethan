@@ -48,7 +48,7 @@ export function PracticeApp() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
         <SessionControls
-          onStart={startNewSession}
+          onStart={(selectedTables) => startNewSession(selectedTables)}
           isLoading={state.isLoading}
         />
       </div>
@@ -126,7 +126,7 @@ export function PracticeApp() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <SessionControls
-        onStart={startNewSession}
+        onStart={(selectedTables) => startNewSession(selectedTables)}
         isLoading={state.isLoading}
       />
     </div>

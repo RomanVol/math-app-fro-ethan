@@ -11,6 +11,7 @@ import {
 } from '@/lib/types';
 import {
   generateAllExercises,
+  generateExercisesForTables,
   shuffleExercises,
   isAnswerCorrect,
   filterExercisesByIds,
@@ -182,7 +183,7 @@ function appReducer(state: ExtendedAppState, action: AppAction): ExtendedAppStat
 // Context
 interface AppContextType {
   state: ExtendedAppState;
-  startNewSession: () => Promise<void>;
+  startNewSession: (selectedTables?: number[]) => Promise<void>;
   resumeSession: () => Promise<void>;
   submitAnswer: (answer: number, elapsedTime: number) => Promise<void>;
   handleTimeout: (elapsedTime: number) => Promise<void>;
@@ -271,13 +272,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [state.session]);
 
   // Start a new session
-  const startNewSession = useCallback(async () => {
+  const startNewSession = useCallback(async (selectedTables?: number[]) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     const action = async () => {
       try {
         const session = await createSession();
-        const allExercises = generateAllExercises();
+        // Use selected tables or default to 3-9
+        const tables = selectedTables && selectedTables.length > 0 
+          ? selectedTables 
+          : [3, 4, 5, 6, 7, 8, 9];
+        const allExercises = generateExercisesForTables(tables);
         const shuffled = shuffleExercises(allExercises);
 
         dispatch({
