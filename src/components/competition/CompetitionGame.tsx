@@ -99,7 +99,7 @@ export function CompetitionGame({
               onChange={(e) => setAnswer(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="התשובה שלך"
-              className="w-full text-center text-4xl font-bold py-4 border-4 border-blue-300 rounded-2xl focus:border-blue-500 focus:outline-none"
+              className="w-full text-center text-4xl font-bold py-4 border-4 border-blue-300 rounded-2xl focus:border-blue-500 focus:outline-none text-black placeholder:text-gray-400 bg-white"
               disabled={isSubmitting}
               autoFocus
             />
