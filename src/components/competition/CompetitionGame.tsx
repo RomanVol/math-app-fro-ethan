@@ -29,7 +29,11 @@ export function CompetitionGame({
   useEffect(() => {
     setAnswer('');
     setFeedback(null);
-    inputRef.current?.focus();
+    // Use setTimeout to ensure focus happens after React re-renders
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(timer);
   }, [currentExercise.id]);
 
   const handleSubmit = async () => {
@@ -41,11 +45,13 @@ export function CompetitionGame({
     
     setFeedback(isCorrect ? 'correct' : 'wrong');
     
-    // Brief delay to show feedback
+    // Brief delay to show feedback, then refocus
     setTimeout(() => {
       setFeedback(null);
       setAnswer('');
       setIsSubmitting(false);
+      // Refocus the input for the next exercise
+      inputRef.current?.focus();
     }, 300);
   };
 
