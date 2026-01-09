@@ -14,6 +14,8 @@ import {
   CompetitionPlayer,
   CompetitionExercise,
   PlayerResult,
+  ExerciseAttempt,
+  ExerciseComparison,
 } from './competitionTypes';
 
 // Generate a random 6-character room code
@@ -181,7 +183,9 @@ export async function startGame(roomId: string): Promise<void> {
 export async function submitAnswer(
   roomId: string,
   playerId: string,
+  exerciseId: string,
   exerciseIndex: number,
+  answer: number | null,
   isCorrect: boolean,
   timeSpent: number
 ): Promise<void> {
@@ -193,9 +197,19 @@ export async function submitAnswer(
   
   const player = snapshot.val() as CompetitionPlayer;
   
-  const updates: Partial<CompetitionPlayer> = {
+  // Save the individual attempt
+  const attempt: ExerciseAttempt = {
+    playerId,
+    answer,
+    isCorrect,
+    timeMs: timeSpent,
+    submittedAt: Date.now(),
+  };
+  
+  const updates: Record<string, unknown> = {
     currentExerciseIndex: exerciseIndex + 1,
     totalTime: player.totalTime + timeSpent,
+    [`attempts/${exerciseId}`]: attempt,
   };
   
   if (isCorrect) {
@@ -259,6 +273,50 @@ export function getResults(room: CompetitionRoom): PlayerResult[] {
   });
   
   return results;
+}
+
+// Get detailed exercise comparison for all players
+export function getExerciseComparisons(room: CompetitionRoom): ExerciseComparison[] {
+  const players = Object.values(room.players);
+  const comparisons: ExerciseComparison[] = [];
+  
+  for (const exercise of room.exercises) {
+    const playerResults: ExerciseComparison['results'] = [];
+    
+    for (const player of players) {
+      const attempt = player.attempts?.[exercise.id];
+      playerResults.push({
+        playerId: player.id,
+        playerName: player.name,
+        answer: attempt?.answer ?? null,
+        isCorrect: attempt?.isCorrect ?? false,
+        timeMs: attempt?.timeMs ?? 0,
+        isWinner: false,
+      });
+    }
+    
+    // Find the winner (fastest correct answer)
+    const correctAnswers = playerResults.filter(r => r.isCorrect);
+    if (correctAnswers.length > 0) {
+      const fastest = correctAnswers.reduce((min, r) => 
+        r.timeMs < min.timeMs ? r : min
+      );
+      const winnerResult = playerResults.find(r => r.playerId === fastest.playerId);
+      if (winnerResult) {
+        winnerResult.isWinner = true;
+      }
+    }
+    
+    comparisons.push({
+      exerciseId: exercise.id,
+      num1: exercise.num1,
+      num2: exercise.num2,
+      correctAnswer: exercise.correctAnswer,
+      results: playerResults,
+    });
+  }
+  
+  return comparisons;
 }
 
 // Leave room

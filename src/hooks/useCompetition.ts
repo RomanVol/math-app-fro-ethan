@@ -206,7 +206,15 @@ export function useCompetition(): UseCompetitionReturn {
     const timeSpent = Date.now() - exerciseStartTime;
     
     try {
-      await submitAnswer(roomId, playerId, currentExerciseIndex, isCorrect, timeSpent);
+      await submitAnswer(
+        roomId,
+        playerId,
+        currentExercise.id,
+        currentExerciseIndex,
+        answer,
+        isCorrect,
+        timeSpent
+      );
       
       // Reset exercise start time for next exercise
       setExerciseStartTime(Date.now());

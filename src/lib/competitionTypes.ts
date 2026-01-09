@@ -1,5 +1,13 @@
 // Types for competition mode
 
+export interface ExerciseAttempt {
+  playerId: string;
+  answer: number | null;
+  isCorrect: boolean;
+  timeMs: number; // time in milliseconds
+  submittedAt: number; // timestamp
+}
+
 export interface CompetitionPlayer {
   id: string;
   name: string;
@@ -10,6 +18,7 @@ export interface CompetitionPlayer {
   wrongAnswers: number;
   totalTime: number; // in milliseconds
   finishedAt?: number; // timestamp when finished
+  attempts?: Record<string, ExerciseAttempt>; // exerciseId -> attempt
 }
 
 export interface CompetitionExercise {
@@ -42,6 +51,21 @@ export interface PlayerResult {
   totalTime: number;
   accuracy: number;
   rank: number;
+}
+
+export interface ExerciseComparison {
+  exerciseId: string;
+  num1: number;
+  num2: number;
+  correctAnswer: number;
+  results: {
+    playerId: string;
+    playerName: string;
+    answer: number | null;
+    isCorrect: boolean;
+    timeMs: number;
+    isWinner: boolean; // fastest correct answer
+  }[];
 }
 
 export type CompetitionStatus = CompetitionRoom['status'];
