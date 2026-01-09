@@ -45,9 +45,37 @@ export function CompetitionLobby({
     setSelectedTablesState(getSelectedTables());
   }, []);
 
+  // Calculate max exercises based on selected tables
+  const maxExercises = selectedTables.length * selectedTables.length;
+
+  // Adjust exercise count if it exceeds max
+  useEffect(() => {
+    if (exerciseCount > maxExercises && maxExercises > 0) {
+      setExerciseCount(maxExercises);
+    }
+  }, [maxExercises, exerciseCount]);
+
   const handleTablesChange = (tables: number[]) => {
     setSelectedTablesState(tables);
     setSelectedTables(tables);
+  };
+
+  // Generate exercise count options based on max
+  const getExerciseOptions = () => {
+    const options = [];
+    for (let i = 5; i <= Math.min(maxExercises, 50); i += 5) {
+      options.push(i);
+    }
+    // Always include maxExercises if it's not already in the list
+    if (maxExercises > 0 && !options.includes(maxExercises)) {
+      options.push(maxExercises);
+      options.sort((a, b) => a - b);
+    }
+    // If no options, at least show what's available
+    if (options.length === 0 && maxExercises > 0) {
+      options.push(maxExercises);
+    }
+    return options;
   };
 
   // If already in a room, show the waiting room
@@ -208,39 +236,42 @@ export function CompetitionLobby({
           {mode === 'create' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-medium mb-2">השם שלך</label>
+                <label className="block text-gray-900 font-semibold mb-2">השם שלך</label>
                 <input
                   type="text"
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
                   placeholder="הכנס את שמך"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none text-lg"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-400 focus:outline-none text-lg text-black"
                   maxLength={20}
                 />
               </div>
               
+              {/* Table Selection - moved before exercise count */}
               <div>
-                <label className="block text-gray-700 font-medium mb-2">מספר תרגילים</label>
-                <select
-                  value={exerciseCount}
-                  onChange={(e) => setExerciseCount(Number(e.target.value))}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none text-lg"
-                >
-                  <option value={5}>5 תרגילים</option>
-                  <option value={10}>10 תרגילים</option>
-                  <option value={15}>15 תרגילים</option>
-                  <option value={20}>20 תרגילים</option>
-                </select>
-              </div>
-              
-              {/* Table Selection */}
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">בחירת לוחות כפל</label>
+                <label className="block text-gray-900 font-semibold mb-2">בחירת לוחות כפל</label>
                 <TableSelector
                   selectedTables={selectedTables}
                   onSelectionChange={handleTablesChange}
                   availableTables={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
                 />
+              </div>
+              
+              <div>
+                <label className="block text-gray-900 font-semibold mb-2">
+                  מספר תרגילים (מקסימום {maxExercises})
+                </label>
+                <select
+                  value={exerciseCount}
+                  onChange={(e) => setExerciseCount(Number(e.target.value))}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-400 focus:outline-none text-lg text-black"
+                >
+                  {getExerciseOptions().map(count => (
+                    <option key={count} value={count}>
+                      {count} תרגילים {count === maxExercises ? '(מקסימום)' : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <button
@@ -267,25 +298,25 @@ export function CompetitionLobby({
           {mode === 'join' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-medium mb-2">השם שלך</label>
+                <label className="block text-gray-900 font-semibold mb-2">השם שלך</label>
                 <input
                   type="text"
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
                   placeholder="הכנס את שמך"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none text-lg"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-400 focus:outline-none text-lg text-black"
                   maxLength={20}
                 />
               </div>
               
               <div>
-                <label className="block text-gray-700 font-medium mb-2">קוד החדר</label>
+                <label className="block text-gray-900 font-semibold mb-2">קוד החדר</label>
                 <input
                   type="text"
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                   placeholder="הכנס קוד בן 6 תווים"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none text-lg text-center font-mono tracking-wider"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-400 focus:outline-none text-lg text-center font-mono tracking-wider text-black"
                   maxLength={6}
                 />
               </div>
