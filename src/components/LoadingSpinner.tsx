@@ -3,6 +3,7 @@
 interface LoadingSpinnerProps {
   message?: string;
 }
+// test comment
 
 /**
  * Loading spinner component with optional message
