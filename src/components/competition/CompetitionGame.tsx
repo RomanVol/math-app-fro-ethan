@@ -25,15 +25,27 @@ export function CompetitionGame({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Focus input helper - works on both mobile and desktop
+  const focusInput = () => {
+    if (inputRef.current) {
+      inputRef.current.focus({ preventScroll: true });
+    }
+  };
+
   // Focus input on mount and when exercise changes
   useEffect(() => {
     setAnswer('');
     setFeedback(null);
-    // Use setTimeout to ensure focus happens after React re-renders
-    const timer = setTimeout(() => {
-      inputRef.current?.focus();
-    }, 50);
-    return () => clearTimeout(timer);
+    // Multiple attempts to ensure focus works across devices
+    focusInput();
+    const timer1 = setTimeout(focusInput, 50);
+    const timer2 = setTimeout(focusInput, 150);
+    const timer3 = setTimeout(focusInput, 300);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
   }, [currentExercise.id]);
 
   const handleSubmit = async () => {
@@ -50,8 +62,10 @@ export function CompetitionGame({
       setFeedback(null);
       setAnswer('');
       setIsSubmitting(false);
-      // Refocus the input for the next exercise
-      inputRef.current?.focus();
+      // Refocus the input for the next exercise - multiple attempts for mobile
+      focusInput();
+      setTimeout(focusInput, 50);
+      setTimeout(focusInput, 150);
     }, 300);
   };
 
@@ -101,13 +115,18 @@ export function CompetitionGame({
             <input
               ref={inputRef}
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="התשובה שלך"
-              className="w-full text-center text-4xl font-bold py-4 border-4 border-blue-300 rounded-2xl focus:border-blue-500 focus:outline-none text-black placeholder:text-gray-400 bg-white"
+              className="w-full text-center text-3xl sm:text-4xl font-bold py-4 border-4 border-blue-300 rounded-2xl focus:border-blue-500 focus:outline-none text-black placeholder:text-gray-400 bg-white"
               disabled={isSubmitting}
               autoFocus
+              autoComplete="off"
+              autoCorrect="off"
+              enterKeyHint="done"
             />
             
             <button
