@@ -1,5 +1,5 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { getDatabase } from 'firebase/database';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getDatabase, Database } from 'firebase/database';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,8 +12,30 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase only if it hasn't been initialized
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const database = getDatabase(app);
+// Lazy initialization to avoid issues during SSR/build
+let app: FirebaseApp | null = null;
+let database: Database | null = null;
 
-export { app, database };
+function getFirebaseApp(): FirebaseApp {
+  if (typeof window === 'undefined') {
+    throw new Error('Firebase can only be initialized on the client side');
+  }
+  
+  if (!firebaseConfig.databaseURL) {
+    throw new Error('Firebase Database URL is not configured. Please check your environment variables.');
+  }
+  
+  if (!app) {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  }
+  return app;
+}
+
+function getFirebaseDatabase(): Database {
+  if (!database) {
+    database = getDatabase(getFirebaseApp());
+  }
+  return database;
+}
+
+export { getFirebaseApp, getFirebaseDatabase };

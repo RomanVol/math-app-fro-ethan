@@ -1,4 +1,4 @@
-import { database } from './firebase';
+import { getFirebaseDatabase } from './firebase';
 import {
   ref,
   set,
@@ -8,7 +8,6 @@ import {
   onValue,
   push,
   off,
-  serverTimestamp,
 } from 'firebase/database';
 import {
   CompetitionRoom,
@@ -69,6 +68,7 @@ export async function createRoom(
   hostName: string,
   settings: { exerciseCount: number; selectedTables: number[] }
 ): Promise<{ roomId: string; playerId: string }> {
+  const database = getFirebaseDatabase();
   const roomId = generateRoomCode();
   const playerId = push(ref(database, 'temp')).key!;
   
@@ -110,6 +110,7 @@ export async function joinRoom(
   roomId: string,
   playerName: string
 ): Promise<{ success: boolean; playerId?: string; error?: string }> {
+  const database = getFirebaseDatabase();
   const roomRef = ref(database, `rooms/${roomId}`);
   const snapshot = await get(roomRef);
   
@@ -152,6 +153,7 @@ export async function setPlayerReady(
   playerId: string,
   isReady: boolean
 ): Promise<void> {
+  const database = getFirebaseDatabase();
   await update(ref(database, `rooms/${roomId}/players/${playerId}`), {
     isReady,
   });
@@ -159,6 +161,7 @@ export async function setPlayerReady(
 
 // Start countdown (host only)
 export async function startCountdown(roomId: string): Promise<void> {
+  const database = getFirebaseDatabase();
   await update(ref(database, `rooms/${roomId}`), {
     status: 'countdown',
     countdownStartedAt: Date.now(),
@@ -167,6 +170,7 @@ export async function startCountdown(roomId: string): Promise<void> {
 
 // Start the game (after countdown)
 export async function startGame(roomId: string): Promise<void> {
+  const database = getFirebaseDatabase();
   await update(ref(database, `rooms/${roomId}`), {
     status: 'playing',
     startedAt: Date.now(),
@@ -181,6 +185,7 @@ export async function submitAnswer(
   isCorrect: boolean,
   timeSpent: number
 ): Promise<void> {
+  const database = getFirebaseDatabase();
   const playerRef = ref(database, `rooms/${roomId}/players/${playerId}`);
   const snapshot = await get(playerRef);
   
@@ -207,6 +212,7 @@ export async function finishGame(
   roomId: string,
   playerId: string
 ): Promise<void> {
+  const database = getFirebaseDatabase();
   await update(ref(database, `rooms/${roomId}/players/${playerId}`), {
     finishedAt: Date.now(),
   });
@@ -260,6 +266,7 @@ export async function leaveRoom(
   roomId: string,
   playerId: string
 ): Promise<void> {
+  const database = getFirebaseDatabase();
   const roomRef = ref(database, `rooms/${roomId}`);
   const snapshot = await get(roomRef);
   
@@ -281,6 +288,7 @@ export function subscribeToRoom(
   roomId: string,
   callback: (room: CompetitionRoom | null) => void
 ): () => void {
+  const database = getFirebaseDatabase();
   const roomRef = ref(database, `rooms/${roomId}`);
   
   const unsubscribe = onValue(roomRef, (snapshot) => {
